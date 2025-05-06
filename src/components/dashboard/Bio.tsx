@@ -2,7 +2,11 @@ import { Pressable, Text, View } from "react-native";
 import { style } from "./Bio.style";
 import { useFonts } from "expo-font";
 
-const Bio = () => {
+type BioProps = {
+  name: string;
+  amount: number;
+};
+const Bio = ({ name = "Guest", amount = 0 }: BioProps) => {
   const [loaded, error] = useFonts({
     "Outfit-Regular": require("../../../assets/fonts/Outfit-Regular.ttf"),
     "Outfit-Bold": require("../../../assets/fonts/Outfit-Bold.ttf"),
@@ -12,12 +16,12 @@ const Bio = () => {
   return (
     <View style={style.bio}>
       <View style={style.bioTitle}>
-        <Text style={{ fontFamily: "Outfit-Medium", color: "white", fontSize: 20 }}>Hello, Lorem Ipsum!</Text>
+        <Text style={{ fontFamily: "Outfit-Medium", color: "white", fontSize: 20 }}>Hello, {name}</Text>
         <Text style={{ fontFamily: "Outfit-Regular", color: "white" }}>What can I do for you, today?</Text>
       </View>
       <View style={style.bioDescription}>
         <View style={style.amountSaving}>
-          <Text style={{ fontFamily: "Outfit-Medium", color: "white", fontSize: 17.5 }}>Rp. 10,000</Text>
+          <Text style={{ fontFamily: "Outfit-Medium", color: "white", fontSize: 17.5 }}>{amount}</Text>
           <Text style={{ fontFamily: "Outfit-Regular", color: "white" }}>Total Savings</Text>
         </View>
       </View>
