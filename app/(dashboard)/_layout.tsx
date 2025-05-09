@@ -1,17 +1,15 @@
-import { Tabs } from "expo-router";
-import { StatusBar } from "react-native";
+ 
+import { Tabs } from 'expo-router';
 
 const RootLayout = () => {
   return (
-    <>
-      <StatusBar backgroundColor={"#7C4585"} barStyle={"light-content"}></StatusBar>
-      <Tabs>
-        <Tabs.Screen name="index" options={{ headerShown: false, title: "Home" }} />
-        <Tabs.Screen name="pocket" options={{ headerShown: false, title: "Pocket" }} />
-        <Tabs.Screen name="notification" options={{ headerShown: false, title: "Notification" }} />
-        <Tabs.Screen name="profile" options={{ headerShown: false, title: "Profile" }} />
-      </Tabs>
-    </>
+    <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="pocket" options={{ title: "Pocket" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      <Tabs.Screen name="rank" options={{ title: "Rank" }} />
+    </Tabs>
+    
   );
 };
 

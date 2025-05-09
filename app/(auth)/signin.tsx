@@ -8,6 +8,7 @@ import ButtonAuth from "@/src/components/auth/ButtonAuth";
 import { useFonts } from "expo-font";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { baseUrl } from "../utils/baseUrl";
 
 const Index = () => {
   const [loaded, error] = useFonts({
@@ -42,13 +43,15 @@ const Index = () => {
 
   const handleLogin = async () => {
     const httpClient = axios.create({
-      baseURL: "http://192.168.1.9:3000/api",
+      baseURL: baseUrl,
+      // baseURL: "http://10.0.173.225:3000/api",
       validateStatus: (status) => {
         return status < 500;
       },
     });
 
     try {
+      console.log(user);
       await httpClient.post("/auth/login", user).then((res) => {
         if (res.status === 200) {
           console.info(res.data);

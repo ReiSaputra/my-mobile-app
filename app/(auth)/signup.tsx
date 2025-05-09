@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import { produce } from "immer";
 import axios from "axios";
+import { baseUrl } from "../utils/baseUrl";
 
 const SignUp = () => {
   const [loaded, error] = useFonts({
@@ -25,7 +26,7 @@ const SignUp = () => {
 
   const handleRegister = async () => {
     const httpClient = axios.create({
-      baseURL: "http://192.168.1.9:3000/api",
+      baseURL: baseUrl,
       validateStatus: (status) => {
         return status < 500;
       },

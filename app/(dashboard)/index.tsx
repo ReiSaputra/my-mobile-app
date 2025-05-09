@@ -10,6 +10,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { baseUrl } from "../utils/baseUrl";
 
 const Index = () => {
   const [loaded, error] = useFonts({
@@ -36,7 +37,7 @@ const Index = () => {
         router.replace("/(auth)/signin");
       } else {
         try {
-          const res = await axios.get(`http://192.168.1.9:3000/api/users/${userId}/dashboard`, {
+          const res = await axios.get(`${baseUrl}/users/${userId}/dashboard`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
