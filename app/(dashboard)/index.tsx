@@ -25,6 +25,7 @@ const Index = () => {
     pocket: [],
     pocketHistories: [],
   });
+  
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const router = useRouter();
 

@@ -1,78 +1,202 @@
-import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView } from "react-native";
-import React, { useState } from "react";
-
-const categories = ["Emergency", "Travel", "Education", "Celebrations", "Investment", "Self Reward", "Gift", "Shopping Purchase"];
+import React, { useEffect, useState } from "react";
+import { Text, View, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Platform } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import axios from "axios";
+import { baseUrl } from "@/app/utils/baseUrl";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 const CreatePocket = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [name, setName] = useState<string>("");
   const [targetSaving, setTargetSaving] = useState("");
   const [currentSaving, setCurrentSaving] = useState("");
-  const [startDuration, setStartDuration] = useState("");
-  const [endDuration, setEndDuration] = useState("");
+  const [endDate, setEndDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [user, setUser] = useState({
+    name: "Guest",
+    amount: 0,
+    pocket: [],
+    pocketHistories: [],
+  });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem("token");
+      const userId = await AsyncStorage.getItem("userId");
+
+      if (!token) {
+        router.replace("/(auth)/signin");
+      } else {
+        try {
+          const res = await axios.get(`${baseUrl}/users/${userId}/dashboard`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            validateStatus: (status) => status < 500,
+          });
+
+          if (res.status !== 200) {
+            router.replace("/(auth)/signin");
+          } else {
+            setUser({
+              name: res.data.data?.name || "Guest",
+              amount: res.data.data?.amount || 0,
+              pocket: res.data.data?.pocket || [],
+              pocketHistories: res.data.data?.pocketHistories || [],
+            });
+            setIsAuthChecked(true);
+          }
+        } catch (err) {
+          router.replace("/(auth)/signin");
+        }
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const categories = ["Emergency", "Travel", "Education", "Celebrations", "Investment", "Self Reward", "Gift", "Shopping", "Other"];
+
+  const onCreate = async () => {
+    const userId = await AsyncStorage.getItem("userId");
+
+    if (!selectedCategory) {
+      alert("Please select a category");
+      return;
+    }
+    if (!targetSaving) {
+      alert("Please enter target saving");
+      return;
+    }
+    if (!currentSaving) {
+      alert("Please enter current saving");
+      return;
+    }
+    if (!endDate) {
+      alert("Please select an end date");
+      return;
+    }
+
+    console.info({
+      name: name,
+      currentBalance: parseInt(currentSaving),
+      userId: userId,
+      type: selectedCategory.toUpperCase(),
+      targetSaving: parseInt(targetSaving),
+      targetDate: endDate.toISOString(),
+    });
+    // Semua validasi lolos, lanjut proses simpan data
+    const httpClient = axios.create({
+      baseURL: `${baseUrl}`,
+      // baseURL: "http://10.0.173.225:3000/api",
+      headers: {
+        Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+      },
+      validateStatus: (status) => {
+        return status < 500;
+      },
+    });
+
+    try {
+      await httpClient
+        .post(`/users/${userId}/pockets`, {
+          // const { name, description, balance, targetDate, category } = req.body;
+          name: name,
+          balance: parseInt(currentSaving),
+          userId: userId,
+          type: selectedCategory.toUpperCase(),
+          targetSaving: parseInt(targetSaving),
+          targetDate: endDate.toISOString(),
+        })
+        .then((res) => {
+          if (res.status === 201) {
+            console.info(res.data);
+            alert("Pocket created successfully!");
+          } else {
+            console.log("Error Client:", res.status, res.data);
+          }
+        });
+    } catch (error) {
+      console.log("Error Server:", error);
+    }
+  };
+
+  const onChangeDate = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios"); // keep open on iOS, close on Android
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Select Category */}
       <Text style={styles.header}>Select Category</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-        {categories.map((cat) => {
-          const isSelected = selectedCategory === cat;
-          return (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryContent,
-                isSelected && {
-                  backgroundColor: "#870C79",
-                  borderColor: "#870C79",
-                },
-              ]}
-              onPress={() => setSelectedCategory(cat)}
-              activeOpacity={0.7}
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            onPress={() => setSelectedCategory(cat)}
+            style={[
+              styles.categoryContent,
+              selectedCategory === cat && {
+                backgroundColor: "#870C79",
+                color: "white",
+              },
+            ]}
+          >
+            <Text
+              style={{
+                color: selectedCategory === cat ? "white" : "#870C79",
+                fontWeight: "500",
+                fontSize: 12,
+              }}
             >
-              <Text style={[styles.categoryText, isSelected && { color: "white" }]}>{cat}</Text>
-            </TouchableOpacity>
-          );
-        })}
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Target Saving */}
-      <Text style={[styles.header, { marginVertical: 16 }]}>Target Saving</Text>
+      <Text style={[styles.header, { marginVertical: "5%" }]}>Name</Text>
       <View style={styles.inputField}>
         <Image source={require("../../../assets/images/icon-target-saving.png")} style={{ width: 30, height: 30 }} />
-        <TextInput style={styles.inputText} placeholder="Enter target saving" placeholderTextColor="#870C7999" keyboardType="numeric" value={targetSaving} onChangeText={setTargetSaving} />
+        <TextInput style={{ color: "#870C79", flex: 1 }} keyboardType="default" placeholder="Enter pocket name" value={name} onChangeText={setName} />
       </View>
 
-      {/* Current Saving */}
-      <Text style={[styles.header, { marginVertical: 16 }]}>Current Saving</Text>
+      <Text style={[styles.header, { marginVertical: "5%" }]}>Target Saving</Text>
+      <View style={styles.inputField}>
+        <Image source={require("../../../assets/images/icon-target-saving.png")} style={{ width: 30, height: 30 }} />
+        <TextInput style={{ color: "#870C79", flex: 1 }} keyboardType="numeric" placeholder="Enter target saving" value={targetSaving} onChangeText={setTargetSaving} />
+      </View>
+
+      <Text style={[styles.header, { marginVertical: "5%" }]}>Current Saving</Text>
       <View style={styles.inputField}>
         <Image source={require("../../../assets/images/icon-current-saving.png")} style={{ width: 30, height: 30 }} />
-        <TextInput style={styles.inputText} placeholder="Enter current saving" placeholderTextColor="#870C7999" keyboardType="numeric" value={currentSaving} onChangeText={setCurrentSaving} />
+        <TextInput style={{ color: "#870C79", flex: 1 }} keyboardType="numeric" placeholder="Enter current saving" value={currentSaving} onChangeText={setCurrentSaving} />
       </View>
 
-      {/* Duration */}
-      <Text style={[styles.header, { marginVertical: 16 }]}>Duration</Text>
-      <View style={styles.row}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Start</Text>
-          <TextInput style={[styles.inputField, { paddingHorizontal: 8, paddingVertical: 10 }]} placeholder="YYYY-MM-DD" placeholderTextColor="#999" value={startDuration} onChangeText={setStartDuration} />
-        </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>End</Text>
-          <TextInput style={[styles.inputField, { paddingHorizontal: 8, paddingVertical: 10 }]} placeholder="YYYY-MM-DD" placeholderTextColor="#999" value={endDuration} onChangeText={setEndDuration} />
-        </View>
-      </View>
+      <Text style={[styles.header, { marginVertical: "5%" }]}>End Date</Text>
+      <TouchableOpacity style={[styles.inputField, { justifyContent: "space-between" }]} onPress={() => setShowDatePicker(true)}>
+        <Text style={{ color: "#870C79" }}>{endDate.toDateString()}</Text>
+        {/* <Image source={require("../../../assets/images/icon-calendar.png")} style={{ width: 30, height: 30 }} /> */}
+      </TouchableOpacity>
+
+      {showDatePicker && <DateTimePicker value={endDate} mode="date" display="default" onChange={onChangeDate} minimumDate={new Date()} />}
 
       {/* Create Button */}
       <TouchableOpacity
-        style={styles.createButton}
-        onPress={() => {
-          // Bisa tambahkan logic simpan data di sini
-          alert(`Create pocket:\nCategory: ${selectedCategory}\nTarget: ${targetSaving}\nCurrent: ${currentSaving}\nDuration: ${startDuration} to ${endDuration}`);
+        style={{
+          backgroundColor: "#9C1399",
+          padding: 16,
+          borderRadius: 30,
+          alignItems: "center",
+          marginTop: 30,
         }}
-        activeOpacity={0.8}
+        onPress={onCreate} // panggil validasi
       >
-        <Text style={styles.createButtonText}>Create</Text>
+        <Text style={{ color: "white", fontWeight: "500" }}>Create</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -84,66 +208,37 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   categoryContent: {
-    marginEnd: 8,
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    marginEnd: "2%",
+    marginTop: "2%",
+    paddingVertical: "6%",
+    paddingHorizontal: "5%",
     borderColor: "#FDDDFC",
     borderRadius: 20,
     borderWidth: 1,
     backgroundColor: "#FDDDFC",
-  },
-  categoryText: {
     color: "#870C79",
     fontWeight: "500",
     fontSize: 12,
+    minWidth: 100,
+    textAlign: "center",
   },
   header: {
     color: "#870C79",
     fontWeight: "600",
     fontSize: 14,
-    marginBottom: 4,
+    marginBottom: "2%",
   },
   inputField: {
     flexDirection: "row",
     gap: 10,
-    marginVertical: 8,
+    marginVertical: "2%",
     alignItems: "center",
     backgroundColor: "#FFFCFE",
-    paddingHorizontal: 10,
+    paddingHorizontal: "2%",
+    paddingVertical: "1%",
     borderRadius: 10,
     borderWidth: 2,
     borderColor: "#FFECF9",
-  },
-  inputText: {
-    flex: 1,
-    color: "#870C79",
-    fontSize: 14,
-    paddingVertical: 8,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  inputGroup: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  label: {
-    marginBottom: 4,
-    color: "#666",
-  },
-  createButton: {
-    backgroundColor: "#9C1399",
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: "center",
-    marginVertical: 24,
-  },
-  createButtonText: {
-    color: "white",
-    fontWeight: "500",
-    fontSize: 16,
   },
 });
 

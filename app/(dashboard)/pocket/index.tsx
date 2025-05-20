@@ -44,6 +44,14 @@ const Pocket = () => {
 
   return (
     <ScrollView style={{ backgroundColor: "white" }}>
+      <Pressable
+        onPress={() => {
+          console.info(pockets);
+        }}
+      >
+        <Text>See</Text>
+      </Pressable>
+
       {/* Add Pocket Button */}
       <View style={styles.addPocketContainer}>
         <TouchableOpacity style={styles.addPocketButton} onPress={() => router.push("/pocket/create")}>
@@ -52,69 +60,78 @@ const Pocket = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Card - Your Saving */}
-      <View
-        style={[
-          styles.containerColumn,
-          {
-            backgroundColor: "#870C79",
-            borderRadius: 20,
-          },
-        ]}
-      >
+      {pockets.map((pocket) => (
         <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
+          key={pocket.id}
+          style={[
+            styles.containerColumn,
+            {
+              backgroundColor: "#870C79",
+              borderRadius: 20,
+              marginBottom: 20, // biar tidak dempet antar kartu
+            },
+          ]}
         >
-          <View style={{ paddingHorizontal: "5%", paddingVertical: "10%" }}>
-            <Text style={styles.titleText}>Name Saving</Text>
-            <Text style={styles.moneyText}>Rp 100.000</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={{ paddingHorizontal: "5%", paddingVertical: "10%" }}>
+              <Text style={styles.titleText}>{pocket.name}</Text>
+              <Text style={styles.moneyText}>Rp {pocket.balance?.toLocaleString("id-ID")}</Text>
+            </View>
+            <View style={{ paddingTop: "5%" }}>
+              <Image
+                source={require("../../../assets/images/money.png")}
+                style={{
+                  width: 100,
+                  height: 100,
+                }}
+              />
+            </View>
           </View>
-          <View style={{ paddingTop: "5%" }}>
-            <Image
-              source={require("../../../assets/images/money.png")}
-              style={{
-                width: 100,
-                height: 100,
-              }}
-            />
-          </View>
-        </View>
 
-        {/* Button withdraw and deposit */}
-        <View
-          style={{
-            flexDirection: "row",
-            width: "100%",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={styles.containerButton}>
-            <TouchableOpacity
-              style={styles.buttonPosition}
-              onPress={() => {
-                router.push("/pocket/deposit");
-              }}
-            >
-              <AntDesign name="caretdown" size={24} color="#00A9A9" />
-              <Text style={{ color: "#00A9A9" }}>Deposit</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.containerButton}>
-            <TouchableOpacity
-              style={styles.buttonPosition}
-              onPress={() => {
-                router.push("/pocket/withdraw");
-              }}
-            >
-              <AntDesign name="caretup" size={24} color="#980E20" />
-              <Text style={{ color: "#980E20" }}>Withdraw</Text>
-            </TouchableOpacity>
+          {/* Button withdraw and deposit */}
+          <View
+            style={{
+              flexDirection: "row",
+              width: "100%",
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={styles.containerButton}>
+              <TouchableOpacity
+                style={styles.buttonPosition}
+                onPress={() => {
+                  router.push({
+                    pathname: "/pocket/deposit",
+                    params: { pocketId: pocket.id }, // kalau ingin kirim data
+                  });
+                }}
+              >
+                <AntDesign name="caretdown" size={24} color="#00A9A9" />
+                <Text style={{ color: "#00A9A9" }}>Deposit</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.containerButton}>
+              <TouchableOpacity
+                style={styles.buttonPosition}
+                onPress={() => {
+                  router.push({
+                    pathname: "/pocket/withdraw",
+                    params: { pocketId: pocket.id }, // kalau ingin kirim data
+                  });
+                }}
+              >
+                <AntDesign name="caretup" size={24} color="#980E20" />
+                <Text style={{ color: "#980E20" }}>Withdraw</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      ))}
 
       {/* Achieved Saving List */}
       {/* <View style={styles.containerColumn}>
@@ -139,8 +156,8 @@ const Pocket = () => {
           </TouchableOpacity>
         </View> */}
 
-        {/* Example Achieved Item */}
-        {/* <View style={{ flexDirection: "row", gap: 10, marginBottom: "5%" }}>
+      {/* Example Achieved Item */}
+      {/* <View style={{ flexDirection: "row", gap: 10, marginBottom: "5%" }}>
           <Image source={require("../../../assets/images/icon-mark.png")} style={{ width: 20, height: 20 }} />
           <Text style={{ flex: 1 }}>Dream Vacation</Text>
           <Text style={{ marginRight: "2%", color: "#B01F9F" }}>Rp 1.000.000</Text>
