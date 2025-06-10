@@ -44,13 +44,13 @@ const Pocket = () => {
 
   return (
     <ScrollView style={{ backgroundColor: "white" }}>
-      <Pressable
+      {/* <Pressable
         onPress={() => {
           console.info(pockets);
         }}
       >
         <Text>See</Text>
-      </Pressable>
+      </Pressable> */}
 
       {/* Add Pocket Button */}
       <View style={styles.addPocketContainer}>

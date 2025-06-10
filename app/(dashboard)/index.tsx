@@ -28,6 +28,7 @@ const Index = () => {
   
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const router = useRouter();
+  
 
   useEffect(() => {
     const checkAuth = async () => {

@@ -1,5 +1,4 @@
- 
-import { Tabs } from 'expo-router';
+import { Tabs } from "expo-router";
 
 const RootLayout = () => {
   return (
@@ -8,6 +7,7 @@ const RootLayout = () => {
       <Tabs.Screen name="pocket" options={{ title: "Pocket", headerShown: false }} />
       <Tabs.Screen name="profile" options={{ title: "Profile", headerShown: false }} />
       <Tabs.Screen name="rank" options={{ title: "Rank", headerShown: false }} />
+      <Tabs.Screen name="notification" options={{ title: "Notification", headerShown: false }}></Tabs.Screen>
     </Tabs>
   );
 };

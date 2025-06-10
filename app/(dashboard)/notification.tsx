@@ -1,91 +1,106 @@
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState } from "react";
-import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { baseUrl } from "../utils/baseUrl";
 
-export default function App() {
-  const [facing, setFacing] = useState<CameraType>("back");
-  const [permission, requestPermission] = useCameraPermissions();
-  const [isCameraActive, setIsCameraActive] = useState(false);
+const Notification = () => {
+  const [template, setTemplate] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!permission) {
-    return <View style={styles.centeredContainer} />;
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem("token");
+      const userId = await AsyncStorage.getItem("userId");
+
+      if (!token) {
+        router.replace("/(auth)/signin");
+      } else {
+        try {
+          const res = await axios.get(`${baseUrl}/notifications/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            validateStatus: (status) => status < 500,
+          });
+
+          if (res.status !== 200) {
+            console.info(res.data);
+            alert("Gagal mengambil notifikasi");
+          } else {
+            setTemplate(res.data.data);
+          }
+        } catch (err) {
+          console.info(err);
+          alert("Terjadi kesalahan");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return <ActivityIndicator style={{ marginTop: 50 }} />;
   }
 
-  if (!permission.granted) {
+  if (template.length === 0) {
     return (
-      <View style={styles.centeredContainer}>
-        <Text style={styles.message}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="Grant Permission" />
+      <View style={styles.container}>
+        <Text style={styles.emptyText}>Tidak ada notifikasi.</Text>
       </View>
     );
   }
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  }
-
-  function toggleCamera() {
-    setIsCameraActive((prev) => !prev);
-  }
-
   return (
-    <View style={styles.container}>
-      {isCameraActive ? (
-        <CameraView style={styles.camera} facing={facing}>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-              <Text style={styles.text}>Flip Camera</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={toggleCamera}>
-              <Text style={styles.text}>Close Camera</Text>
-            </TouchableOpacity>
-          </View>
-        </CameraView>
-      ) : (
-        <View style={styles.centeredContainer}>
-          <Text style={styles.message}>Camera is not active</Text>
-          <Button title="Open Camera" onPress={toggleCamera} />
-        </View>
-      )}
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      {template.map((item) => (
+        <TouchableOpacity key={item.id} style={styles.itemContainer} onPress={() => router.push(`/notification-detail/${item.id}`)}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.description} numberOfLines={2}>
+            {item.description}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: 16,
+    backgroundColor: "#f5f5f5",
   },
-  centeredContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  message: {
-    textAlign: "center",
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  camera: {
-    flex: 1,
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 30,
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: "space-around",
-    paddingHorizontal: 20,
-  },
-  button: {
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  itemContainer: {
+    backgroundColor: "#fff",
+    padding: 16,
     borderRadius: 10,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  text: {
+  title: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "white",
+    marginBottom: 6,
+    color: "#333",
+  },
+  description: {
+    fontSize: 14,
+    color: "#666",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 50,
+    fontSize: 16,
+    color: "#777",
   },
 });
+
+export default Notification;

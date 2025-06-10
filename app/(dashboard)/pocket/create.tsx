@@ -57,7 +57,7 @@ const CreatePocket = () => {
     checkAuth();
   }, []);
 
-  const categories = ["Emergency", "Travel", "Education", "Celebrations", "Investment", "Self Reward", "Gift", "Shopping", "Other"];
+  const categories = ["Emergency", "Travel", "Education", "Celebration", "Investment", "Self Reward", "Gift", "Shopping", "Other"];
 
   const onCreate = async () => {
     const userId = await AsyncStorage.getItem("userId");
@@ -114,6 +114,7 @@ const CreatePocket = () => {
           if (res.status === 201) {
             console.info(res.data);
             alert("Pocket created successfully!");
+            router.replace("/(dashboard)/pocket");
           } else {
             console.log("Error Client:", res.status, res.data);
           }
